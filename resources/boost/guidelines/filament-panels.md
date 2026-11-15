@@ -14,10 +14,14 @@ Standing rules from the project owner for every Filament panel of the team. Befo
 
 ## Tables
 
-- Every column that can be sorted is `sortable()`, including relationship columns (like `tenant.name`), dates and statuses. Text columns are `searchable()`.
-- A filter for every status, type or currency the table shows.
+Every table has sorting, searching, filters, row actions and bulk actions on every column and record they can apply to, export in the common formats, and delete with a trash.
+
+- Every column that can be sorted is `sortable()`, including relationship columns (like `tenant.name`), dates, numbers, money and statuses, and the table has a sensible `defaultSort()`.
+- Every text column people look things up by is `searchable()` (names, codes, phone numbers, emails, references).
+- A filter for every column that can be filtered: a `SelectFilter` for every status, type, enum, currency and relation (searchable and preloaded for long lists), a `TernaryFilter` for every yes/no column, and a date range filter (from and until) for every important date. Money and count columns that people compare get a from/to range filter.
 - Secondary columns are toggleable and hidden by default: `toggleable(isToggledHiddenByDefault: true)`.
-- Row checkboxes with bulk actions on every table: export of the selected rows, plus a header action that exports the whole table. Add the bulk actions that fit the table (activate and deactivate, confirm payment, and similar).
+- Row actions for what can be done to one record (view, edit, and the actions that fit it), and bulk actions with row checkboxes for what can be done to many (activate and deactivate, confirm payment, and similar).
+- Export in the common formats with `Mo7mud\FilamentConventions\Tables\TableExport`: `TableExport::actions($permission, 'file-name')` in the table header exports what the table shows (visible columns, current search, filters and sort) as Excel (XLSX), CSV or OpenDocument (ODS), or opens the print window (print or save as PDF); `TableExport::bulkActions($permission, 'file-name')` does the same for the selected rows. `$permission` is a permission name or a closure.
 - Clicking a row opens a useful view page when one exists, not an edit modal. Editing is a button in the row and in the header of the view page. On a resource list page, `->recordAction(null)` makes the row click use the view page URL.
 - Tables stay fast on tens of thousands of rows: server-side pagination, eager loading (no N+1), and indexes on the columns they sort and filter by.
 
@@ -25,9 +29,15 @@ Standing rules from the project owner for every Filament panel of the team. Befo
 
 - Every business table has delete on the row and as a bulk action, plus a "Trash" button with a trash icon above the table that shows the deleted rows only, with restore and permanent delete, on the row and in bulk.
 - Delete is a soft delete first (`deleted_at`); permanent delete is the operator's choice from the trash.
-- A record with work in progress cannot be deleted at all (an active subscription, upcoming sessions, a payment started or under review), and the reason is shown.
+- A record with work in progress cannot be deleted at all (an active subscription, a shipment on its way, a payment started or under review), and the reason is shown.
 - A record with financial transactions is only ever soft deleted and can be restored; it is never deleted permanently. A record linked to money without transactions can be deleted permanently.
+- Records that are history themselves are never deleted, not even softly: ledger and wallet entries, payments, invoices, cash movements, audit and activity logs, sent notification logs. Correct them with a reversing entry instead. Their tables still get sorting, filters and export.
 - `belongsTo` relations to a model with a trash read it `withTrashed()`, duplicate checks in code use `withTrashed()`, and internal deletes (deleting a tenant, replacing an invoice) use `forceDelete()`.
+- Build it with the shared tools in `Mo7mud\FilamentConventions`:
+  - The model uses `Trash\Trashable` (soft deletes).
+  - The rules per model are set once, in a service provider's `boot()`, with `Trash\TrashRules::define(Model::class, blocker: fn ($record): ?string => ..., kept: fn ($record): bool|string|null => ..., trashing: ..., purging: ...)`: `blocker` returns why it cannot be deleted now, `kept` returns `true` (money history) or a reason to never delete it permanently.
+  - The page (List page, relation manager or custom page with a table) uses `Tables\ShowsTrash`.
+  - The table passes its query through `Tables\TableTrash::scope($query, $livewire)` (in `modifyQueryUsing`), adds `TableTrash::toggle($permission)` to its header actions, `...TableTrash::recordActions($deletePermission, $purgePermission)` to its row actions, and `...TableTrash::bulkActions($deletePermission, $purgePermission)` to its bulk actions.
 
 ## Tabs: client-side only
 

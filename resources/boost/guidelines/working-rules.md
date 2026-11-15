@@ -2,10 +2,16 @@
 
 Standing rules from the project owner for every project of the team.
 
-## Flexibility: options, never one hardcoded choice
+## Flexibility: everything from the panel
 
+- No operational values in code: prices, countries, currencies, texts, colors, time limits, rules and links are settings in the panel, and their defaults come from seeders.
 - Never hardcode a single business behavior. When customers might do something differently, build every option and let them choose in the panel, either at the moment of the action or as a setting (per company or per tenant where the project has tenants).
 - When planning a feature, do not ask the owner to pick one behavior; build the options and the setting or action choice that switches between them. Ask only when the options themselves are unclear.
+
+## Dependencies and licenses
+
+- Libraries only under MIT, BSD, Apache 2.0 or ISC; never GPL or AGPL. Fonts under OFL, icons under open licenses, and no images without a license.
+- Every new dependency needs the owner's approval.
 
 ## Full features, not a minimal version
 

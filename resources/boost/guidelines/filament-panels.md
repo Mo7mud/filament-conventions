@@ -1,20 +1,33 @@
 # Filament Panels
 
-Standing rules from the project owner for every Filament panel of the team. Before writing Filament code you are not sure about, check "Verified Filament facts" below or read the installed source in `vendor/filament`; do not guess. Use only the APIs of the installed Filament version.
+Standing rules from the project owner for every Filament panel of the team. Before writing Filament code you are not sure about, check "Verified Filament facts" below, use Boost `search-docs`, or read the installed source in `vendor/filament`; do not guess. Use only the APIs of the installed Filament version, never code from another major version. When something you needed was missing here, tell the owner so it is added to this package.
 
 ## Screens hold no business logic
 
-- A Filament screen calls an action or service class; it does not call `save()`, `create()` or `DB` itself.
+- Business logic lives in action and service classes. Filament screens, Livewire components and API controllers are thin adapters that call them; a screen never calls `save()`, `create()` or `DB` itself.
 - Point a Filament action at a page method by name (`Action::make('save')->action('save')`) instead of a closure that calls `$this->save()`.
+- Shared rules are applied through shared components (a base class, trait or helper), never by copying the same code into every screen.
+
+## Plugins
+
+- As few Filament plugins as possible: free, actively maintained, and under a permissive license (MIT, BSD, Apache 2.0 or ISC; never GPL or AGPL). Every new plugin needs the owner's approval.
 
 ## Tables
 
-- Every column that can be sorted is `sortable()`, including relationship columns (like `tenant.name`), dates and statuses.
-- Every table has row checkboxes and bulk actions: at least export of the selected rows, plus a header action that exports the whole table.
-- Add the bulk actions that fit the table (activate and deactivate, confirm payment, and similar). Bulk delete only when the owner decides so.
+- Every column that can be sorted is `sortable()`, including relationship columns (like `tenant.name`), dates and statuses. Text columns are `searchable()`.
 - A filter for every status, type or currency the table shows.
 - Secondary columns are toggleable and hidden by default: `toggleable(isToggledHiddenByDefault: true)`.
+- Row checkboxes with bulk actions on every table: export of the selected rows, plus a header action that exports the whole table. Add the bulk actions that fit the table (activate and deactivate, confirm payment, and similar).
 - Clicking a row opens a useful view page when one exists, not an edit modal. Editing is a button in the row and in the header of the view page. On a resource list page, `->recordAction(null)` makes the row click use the view page URL.
+- Tables stay fast on tens of thousands of rows: server-side pagination, eager loading (no N+1), and indexes on the columns they sort and filter by.
+
+## Delete and trash
+
+- Every business table has delete on the row and as a bulk action, plus a "Trash" button with a trash icon above the table that shows the deleted rows only, with restore and permanent delete, on the row and in bulk.
+- Delete is a soft delete first (`deleted_at`); permanent delete is the operator's choice from the trash.
+- A record with work in progress cannot be deleted at all (an active subscription, upcoming sessions, a payment started or under review), and the reason is shown.
+- A record with financial transactions is only ever soft deleted and can be restored; it is never deleted permanently. A record linked to money without transactions can be deleted permanently.
+- `belongsTo` relations to a model with a trash read it `withTrashed()`, duplicate checks in code use `withTrashed()`, and internal deletes (deleting a tenant, replacing an invoice) use `forceDelete()`.
 
 ## Tabs: client-side only
 
@@ -24,14 +37,31 @@ Every tab set is a client-side tab set: Alpine.js switches tabs at once in the b
 - Never bind tabs to a Livewire property (`->livewireProperty(...)`): every switch then becomes a server round trip that redraws the page.
 - Clusters (`Filament\Clusters\Cluster`) and sub-navigation are forbidden, since they load a new page for every tab.
 - A table inside a tab: the page `implements HasTable`, uses `InteractsWithTable`, and the tab holds `EmbeddedTable::make()`.
-- A View or Edit page with more than one relation manager uses the `Mo7mud\FilamentConventions\Concerns\HasInstantRelationManagerTabs` trait. It loads every table with the page (hidden tabs never load lazily) and refreshes a tab's table through Livewire when the tab opens, so it shows changes made in other tabs.
+- Relation tables on a View or Edit page are client-side tabs too, never the default relation manager tabs (bound to a Livewire property). Either use the `Mo7mud\FilamentConventions\Concerns\HasInstantRelationManagerTabs` trait on the page, or put each relation manager as a tab inside the page's own `Tabs` card with `Livewire::make(SomeRelationManager::class, ['ownerRecord' => $record, 'pageClass' => static::class])`.
+- The trait loads every table with the page (lazy tables never load inside a hidden tab) and refreshes a tab's table through Livewire when the tab opens, so it shows changes made in other tabs.
 - Tables update through Livewire (filters, actions, refreshes), never through a full page reload or a link to the same page.
 - List page tabs (`getTabs()` on a List page) filter the table through Livewire and are allowed as they are.
+
+## Forms and modals
+
+- Cards side by side have about the same height: a short card next to a short one, a long one next to a long one, and a card with no match takes the full width.
+- A modal with two cards in a row is widened (`modalWidth`), and its row becomes one column on small screens.
+- One choice from several options is a `Radio` group, or a `Select` for long lists. Never `ToggleButtons`, buttons styled as options, or several checkboxes for one value. In custom (non-Filament) views, `<input type="radio">` inside a `label`.
+- Long lists (time zones, countries, currencies) are searchable, with translated names searchable in Arabic and English.
+- Long texts customers read (instructions, terms) use `RichEditor`, with their images on the private disk.
+- Every text goes through the translation files, Arabic is the default language, and the direction follows the language.
+- Accessibility: a label for every field, enough contrast, and full keyboard use.
+
+## Livewire
+
+- Every action goes through a policy. Every record ID in a component is protected with `#[Locked]`, or the full model is passed instead. Each component has IDOR tests.
+- Pure interface interactions use Alpine.js. Fields reach the server on blur or with a debounce, never on every keystroke.
+- Heavy parts load as lazy islands, and links use `wire:navigate`.
 
 ## Themes: DaisyUI in every panel
 
 - Every panel uses `osamanagi/filament-daisy-ui-themes` (MIT), with the theme switcher in the topbar. Install with `composer require osamanagi/filament-daisy-ui-themes:^1.1`, then `php artisan filament:assets`; it needs no npm or Tailwind build.
-- Register it after `->colors()` in every panel provider, one instance per panel:
+- Register it after `->colors()` in every panel provider, one instance per panel. The theme list and the default theme live in one place (one class or shared panel defaults), not repeated per panel:
 
 ```php
 use Nagi\FilamentDaisyUiThemes\FilamentDaisyUiThemesPlugin;
@@ -50,18 +80,17 @@ use Nagi\FilamentDaisyUiThemes\FilamentDaisyUiThemesPlugin;
 ```
 
 - With a built Filament theme (`resources/css/filament/{panel}/theme.css`), add it at the end of that file. Without one, put it in a `<style>` tag in a Blade view loaded through `PanelsRenderHook::HEAD_END` in every panel.
+- Brand colors come from the appearance settings in one place (CSS variables) that both Filament and the custom views read.
 
 ## Dashboard stat cards
 
 - Each card gets a color by its content (people, sessions, success, payments, problems...), and no color repeats on the same screen.
 - The color goes in three places only: the card border, a side shadow, and the text and icon color inside it. The background never changes; it follows the theme (light, dark or DaisyUI).
-- Add the classes with `Stat::extraAttributes([...], merge: true)` on the card root (`fi-wi-stats-overview-stat`), and style `-label`, `-value`, `-description` and the `.fi-icon` inside `-label-ctn`. Mirror the shadow for right-to-left (`[dir="rtl"]`).
+- Build every card through one shared stat card helper. It adds the classes with `Stat::extraAttributes([...], merge: true)` on the card root (`fi-wi-stats-overview-stat`); style `-label`, `-value`, `-description` and the `.fi-icon` inside `-label-ctn`, and mirror the shadow for right-to-left (`[dir="rtl"]`).
 
-## Forms
+## Tests
 
-- Long lists (time zones, countries, currencies) are searchable, with translated names searchable in Arabic and English.
-- Long texts customers read (instructions, terms) use `RichEditor`, with their images on the private disk.
-- Every text goes through the translation files, and Arabic is the default language.
+- Every screen has an automated test, alongside the tenant isolation and permission tests (allowed and refused) each feature needs.
 
 ## Verified Filament facts (read from the installed source of Filament 5)
 
@@ -78,6 +107,7 @@ use Nagi\FilamentDaisyUiThemes\FilamentDaisyUiThemesPlugin;
 - Row click on a resource list page: `ListRecords` (and `ManageRecords`) picks the `view` row action, then `edit`, when they have no URL, so an `EditAction` in a modal opens on click. `->recordAction(null)` on the resource table uses the view page URL instead.
 - View page: `ViewRecord::infolist()` calls `Resource::infolist()`. An `EditAction` in its header without an edit page opens a modal with `Resource::form()`.
 - Page widgets: `getHeaderWidgets()` and `getFooterWidgets()` on `Page`. Record pages pass `['record' => $this->getRecord()]` to widgets through `getWidgetData()`, so the widget declares `public ?Model $record = null;`.
-- Relation manager tabs on record pages are built in `Filament\Resources\Pages\Concerns\HasRelationManagers::getRelationManagersContentComponent()`; by default they are bound to the `activeRelationManager` Livewire property, which is why the shared trait replaces them.
+- Relation manager tabs on record pages are built in `Filament\Resources\Pages\Concerns\HasRelationManagers::getRelationManagersContentComponent()`; by default they are bound to the `activeRelationManager` Livewire property, which is why the shared trait replaces them. Relation managers are lazy by default (`'lazy' => true` in `getDefaultProperties()`).
 - When a Filament panel has a tenant, Filament assigns the current tenant to new records of resource models on `creating`, also in tests; move a record to another tenant after creating it when a test needs that.
 - Render hooks: `PanelsRenderHook::HEAD_END` adds a `<style>` to the head of every page of the panel.
+- Clusters (for reference only, forbidden here): `Filament\Clusters\Cluster`, `$subNavigationPosition` from `Filament\Pages\Enums\SubNavigationPosition`, `$cluster` on a page or resource, and `discoverClusters(in:, for:)` on the panel.

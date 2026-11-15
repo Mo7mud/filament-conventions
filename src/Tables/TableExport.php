@@ -262,7 +262,12 @@ final class TableExport
         foreach ($columns as $column) {
             $column->record($record);
             $state = $column->getState();
-            $cells[] = self::text($column instanceof TextColumn ? $column->formatState($state) : $state);
+            $cells[] = self::text(match (true) {
+                ! $column instanceof TextColumn, $state === null => $state,
+                is_array($state) => array_map(fn (mixed $item): mixed => $item === null ? null : $column->formatState($item), $state),
+                $state instanceof Collection => $state->map(fn (mixed $item): mixed => $item === null ? null : $column->formatState($item))->all(),
+                default => $column->formatState($state),
+            });
             $column->clearCachedState();
         }
 

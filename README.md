@@ -26,6 +26,6 @@ composer require mo7mud/filament-conventions:^1.0
 
 Edit the files here, push and tag a new version (like `v1.1.0`), then in every project run `composer update mo7mud/filament-conventions` and `php artisan boost:update`.
 
-## Private repository
+## Public repository
 
-`composer install` needs read access to this repository wherever it runs: locally through your GitHub login, and in GitHub Actions through a `COMPOSER_AUTH` secret holding a read-only token.
+This repository is public, so `composer install` works anywhere without a token. Never put secrets, customer data or anything project-specific here; keys belong in each project's `.env`.

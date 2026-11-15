@@ -16,7 +16,7 @@ The shared Filament rules of the team, delivered as Laravel Boost guidelines, an
 ```
 
 ```bash
-composer require mo7mud/filament-conventions:dev-main
+composer require mo7mud/filament-conventions:^1.0
 ```
 
 2. Add `"mo7mud/filament-conventions"` to the `packages` list in `boost.json`.
@@ -24,7 +24,7 @@ composer require mo7mud/filament-conventions:dev-main
 
 ## Change a rule
 
-Edit the files here, push, then in every project run `composer update mo7mud/filament-conventions` and `php artisan boost:update`.
+Edit the files here, push and tag a new version (like `v1.1.0`), then in every project run `composer update mo7mud/filament-conventions` and `php artisan boost:update`.
 
 ## Private repository
 

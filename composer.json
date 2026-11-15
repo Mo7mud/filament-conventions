@@ -1,0 +1,16 @@
+{
+    "name": "mo7mud/filament-conventions",
+    "description": "Shared Filament rules (as Laravel Boost guidelines) and the shared Filament code that applies them.",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.3",
+        "filament/filament": "^5.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mo7mud\\FilamentConventions\\": "src/"
+        }
+    },
+    "minimum-stability": "stable"
+}

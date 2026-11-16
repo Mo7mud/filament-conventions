@@ -5,7 +5,7 @@ Standing rules from the project owner for every Filament panel of the team. Befo
 ## Screens hold no business logic
 
 - Business logic lives in action and service classes. Filament screens, Livewire components and API controllers are thin adapters that call them; a screen never calls `save()`, `create()` or `DB` itself.
-- Point a Filament action at a page method by name (`Action::make('save')->action('save')`) instead of a closure that calls `$this->save()`.
+- Point a simple Filament action (no modal fields) at a page method by name (`Action::make('save')->action('save')`). An action with a modal form (`schema()`) calls the page method from a closure instead, `->action(fn (array $data) => $this->sendTest($data))`, since a string handler never receives the modal data.
 - Shared rules are applied through shared components (a base class, trait or helper), never by copying the same code into every screen.
 
 ## Plugins
@@ -109,7 +109,7 @@ use Nagi\FilamentDaisyUiThemes\FilamentDaisyUiThemesPlugin;
 - A table inside a schema: `Filament\Schemas\Components\EmbeddedTable::make()` renders `$livewire->getTable()`, so the page must implement `HasTable`. `EmbeddedTable::make(SomeLivewire::class, [...])` returns a `Livewire` component.
 - A Livewire component inside a schema: `Filament\Schemas\Components\Livewire::make($component, $data)`, with `lazy()`.
 - Buttons inside a schema: `Filament\Schemas\Components\Actions::make([Action::make(...)])`.
-- `Action::action('save')` (a string) calls the Livewire method by name and injects its parameters.
+- `Action::action('save')` (a string) becomes the button's `wire:click="save"` (`Action::getLivewireClickHandler()`); `getActionFunction()` returns null for a string, so on an action with a modal form the submit runs nothing and the method never gets `$data`. Such an action uses a closure: `->action(fn (array $data) => $this->save($data))`.
 - Form wrapper: `Filament\Schemas\Components\Form::make([...])->livewireSubmitHandler('save')->footer([...])` renders a `<form wire:submit>`. Never put a table inside it (nested forms); use `Actions` buttons instead.
 - Tabs: `Filament\Schemas\Components\Tabs::make()->tabs([...])`, with `persistTabInQueryString()` and `livewireProperty()` (the latter is forbidden here, see Tabs).
 - Action schema: `Action::schema([...])` (`form()` is the old name); `using(Closure)` customizes saving, and `model(ModelClass::class)` sets the model of a create action on a table without a resource.

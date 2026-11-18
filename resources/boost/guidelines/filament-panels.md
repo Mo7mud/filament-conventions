@@ -52,6 +52,12 @@ Every tab set is a client-side tab set: Alpine.js switches tabs at once in the b
 - Tables update through Livewire (filters, actions, refreshes), never through a full page reload or a link to the same page.
 - List page tabs (`getTabs()` on a List page) filter the table through Livewire and are allowed as they are.
 
+## Topbar menus: floating dropdowns
+
+- Everything opened from the topbar opens as a floating dropdown under its button, like the user menu: the notification bell, the theme switcher and any custom topbar menu. Never a slide-over (`slideOver()`) or a side drawer that covers the side of the page.
+- The notification bell uses the shared dropdown in every panel that has database notifications: `->databaseNotifications(livewireComponent: \Mo7mud\FilamentConventions\Notifications\DatabaseNotificationsDropdown::class)`. It keeps Filament's unread count, mark all as read, clear, polling, live updates and paging.
+- A custom topbar menu is built with `<x-filament::dropdown placement="bottom-end">`, not teleported when its content updates through Livewire, so it stays current while open.
+
 ## Forms and modals
 
 - Cards side by side have about the same height: a short card next to a short one, a long one next to a long one, and a card with no match takes the full width.
@@ -120,4 +126,5 @@ use Nagi\FilamentDaisyUiThemes\FilamentDaisyUiThemesPlugin;
 - Relation manager tabs on record pages are built in `Filament\Resources\Pages\Concerns\HasRelationManagers::getRelationManagersContentComponent()`; by default they are bound to the `activeRelationManager` Livewire property, which is why the shared trait replaces them. Relation managers are lazy by default (`'lazy' => true` in `getDefaultProperties()`).
 - When a Filament panel has a tenant, Filament assigns the current tenant to new records of resource models on `creating`, also in tests; move a record to another tenant after creating it when a test needs that.
 - Render hooks: `PanelsRenderHook::HEAD_END` adds a `<style>` to the head of every page of the panel.
+- Notification bell: `Panel::databaseNotifications(livewireComponent: ...)` swaps the Livewire component the topbar renders (`filament()->getDatabaseNotificationsLivewireComponent()`). Filament's own `Filament\Notifications\Livewire\DatabaseNotifications` renders a slide-over modal (`slide-over` in `database-notifications.blade.php`); a subclass only overrides `render()`. Its `#[On('databaseNotificationsSent')]` listener refreshes it, so dispatching that Livewire event from the browser updates the bell at once.
 - Clusters (for reference only, forbidden here): `Filament\Clusters\Cluster`, `$subNavigationPosition` from `Filament\Pages\Enums\SubNavigationPosition`, `$cluster` on a page or resource, and `discoverClusters(in:, for:)` on the panel.

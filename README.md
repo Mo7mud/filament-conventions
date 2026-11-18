@@ -3,7 +3,7 @@
 The shared Filament rules of the team, delivered as Laravel Boost guidelines, and the shared code that applies them.
 
 - `resources/boost/guidelines/`: the rules. Laravel Boost merges them into `CLAUDE.md`, `AGENTS.md` and the files of the other agents.
-- `src/`: shared code, such as `Concerns\HasInstantRelationManagerTabs` for client-side relation manager tabs.
+- `src/`: shared code, such as `Concerns\HasInstantRelationManagerTabs` for client-side relation manager tabs and `Notifications\DatabaseNotificationsDropdown` for the notification bell as a dropdown.
 
 ## Add to a project
 

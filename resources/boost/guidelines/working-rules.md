@@ -8,6 +8,10 @@ Standing rules from the project owner for every project of the team.
 - Never hardcode a single business behavior. When customers might do something differently, build every option and let them choose in the panel, either at the moment of the action or as a setting (per company or per tenant where the project has tenants).
 - When planning a feature, do not ask the owner to pick one behavior; build the options and the setting or action choice that switches between them. Ask only when the options themselves are unclear.
 
+## Floating menus, not side panels
+
+- Menus and lists opened from the top bar of any interface (notifications, account, themes, quick actions) open as a floating window under their button, like the account menu, never as a side panel that slides over the page. In Filament panels this is built with the shared tools (see Filament Panels, "Topbar menus").
+
 ## Dependencies and licenses
 
 - Libraries only under MIT, BSD, Apache 2.0 or ISC; never GPL or AGPL. Fonts under OFL, icons under open licenses, and no images without a license.
